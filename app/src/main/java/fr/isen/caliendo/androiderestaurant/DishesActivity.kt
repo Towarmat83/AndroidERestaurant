@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -48,8 +49,10 @@ class DishesActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting(name = categoryName)
-                    DishesList(context = this, categoryName = categoryName) // Passer le contexte ici
+                    Column {
+                        Greeting(name = categoryName)
+                        DishesList(context = this@DishesActivity, categoryName = categoryName)
+                    }
                 }
             }
         }
@@ -74,6 +77,7 @@ fun DishesList(context: Context, categoryName: String) {
     val queue = remember { Volley.newRequestQueue(context) }
     val url = "http://test.api.catering.bluecodegames.com/menu"
     val params = JSONObject().apply { put("id_shop", "1") }
+    val dishes = remember { mutableStateOf<List<Data>>(emptyList()) }
 
     // Utilisation de LaunchedEffect pour lancer la demande une seule fois
     LaunchedEffect(categoryName) { // Utilisez categoryName comme clé pour relancer l'effet si celui-ci change
@@ -83,9 +87,18 @@ fun DishesList(context: Context, categoryName: String) {
                 val dataResult = gson.fromJson(response.toString(), DataResult::class.java)
 
                 when (categoryName) {
-                    "Entrées" -> Log.d("DishesList", "Entrées: ${dataResult.data}")
-                    "Plats" -> Log.d("DishesList", "Plats: ${dataResult.data}")
-                    "Desserts" -> Log.d("DishesList", "Desserts: ${dataResult.data}")
+                    "Entrées" -> {
+                        Log.d("DishesList", "Entrées: ${dataResult.data}")
+                        dishes.value = dataResult.data
+                    }
+                    "Plats" -> {
+                        Log.d("DishesList", "Plats: ${dataResult.data}")
+                        dishes.value = dataResult.data
+                    }
+                    "Desserts" -> {
+                        Log.d("DishesList", "Desserts: ${dataResult.data}")
+                        dishes.value = dataResult.data
+                    }
                     else -> Log.d("DishesList", "Category not found: $categoryName")
                 }
             } catch (e: JSONException) {
@@ -97,7 +110,18 @@ fun DishesList(context: Context, categoryName: String) {
 
         queue.add(request)
     }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items(dishes.value) { dish ->
+            dish.nameFr?.let { ClickableDishItem(context, it) }
+        }
+    }
 }
+
 
 @Composable
 fun ClickableDishItem(context: Context, name: String) {
@@ -105,6 +129,7 @@ fun ClickableDishItem(context: Context, name: String) {
     Text(
         text = name,
         style = MaterialTheme.typography.bodyLarge,
+        textAlign = TextAlign.Center,
         modifier = Modifier
             .padding(16.dp)
             .clickable {
@@ -112,6 +137,7 @@ fun ClickableDishItem(context: Context, name: String) {
             }
     )
 }
+
 
 private fun navigateToDishDetails(context: Context, dishName: String) {
     val intent = Intent(context, DetailsDishesActivity::class.java)
