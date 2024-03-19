@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">AndroidERestaurant</string>
+    <string name="title_activity_main_activityzelfomz">MainActivityzelfomz</string>
+    <string name="title_activity_dishes">DishesActivity</string>
+    <string name="category_entrees">Entrées</string>
+    <string name="category_plats">Plats</string>
+    <string name="category_desserts">Desserts</string>
+    <string-array name="entrees_list">
+        <item>Entrée 1</item>
+        <item>Entrée 2</item>
+        <item>Entrée 3</item>
+    </string-array>
+    <string-array name="plats_list">
+        <item>Plat 1</item>
+        <item>Plat 2</item>
+        <item>Plat 3</item>
+    </string-array>
+    <string-array name="desserts_list">
+        <item>Dessert 1</item>
+        <item>Dessert 2</item>
+        <item>Dessert 3</item>
+    </string-array>
+    <string name="title_activity_details_dishes">DetailsDishesActivity</string>
 </resources>

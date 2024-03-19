@@ -1,5 +1,6 @@
 package fr.isen.caliendo.androiderestaurant
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,6 +33,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.startActivity
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
 
 class HomeActivity : ComponentActivity() {
@@ -40,18 +43,21 @@ class HomeActivity : ComponentActivity() {
         setContent {
             AndroidERestaurantTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Scaffold()
+                    MainPage(navigateToDishes = { categoryName -> navigateToDishesActivity(categoryName) })
                 }
             }
         }
+    }
+    private fun navigateToDishesActivity(categoryName: String) {
+        val intent = Intent(this, DishesActivity::class.java)
+        intent.putExtra("categoryName", categoryName)
+        startActivity(intent)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Scaffold() {
-    var presses by remember { mutableIntStateOf(0) }
-
+fun MainPage(navigateToDishes: (String) -> Unit) {
     Scaffold(
         topBar = {
             val couleurOrange = "#fa9b05"
@@ -89,34 +95,18 @@ fun Scaffold() {
                     .clip(RoundedCornerShape(16.dp))
                     .fillMaxWidth()
             )
-            EntreesButton { presses++ }
+            MenuButton("Entrées", "Entrées", onNavigate = navigateToDishes)
             Divider(modifier = Modifier.fillMaxWidth(0.5f)) // Modifier la largeur à 50%
-            PlatsButton { presses++ }
+            MenuButton("Plats", "Plats", onNavigate = navigateToDishes)
             Divider(modifier = Modifier.fillMaxWidth(0.5f)) // Modifier la largeur à 50%
-            DessertsButton { presses++ }
+            MenuButton("Desserts", "Desserts", onNavigate = navigateToDishes)
         }
     }
 }
 
-
-
 @Composable
-fun EntreesButton(onClick: () -> Unit) {
-    ElevatedButton(onClick = { onClick() }) {
-        Text("Entrées")
-    }
-}
-
-@Composable
-fun PlatsButton(onClick: () -> Unit) {
-    ElevatedButton(onClick = { onClick() }) {
-        Text("Plats")
-    }
-}
-
-@Composable
-fun DessertsButton(onClick: () -> Unit) {
-    ElevatedButton(onClick = { onClick() }) {
-        Text("Desserts")
+fun MenuButton(text: String, categoryName: String, onNavigate: (String) -> Unit) {
+    ElevatedButton(onClick = { onNavigate(categoryName) }) {
+        Text(text)
     }
 }
