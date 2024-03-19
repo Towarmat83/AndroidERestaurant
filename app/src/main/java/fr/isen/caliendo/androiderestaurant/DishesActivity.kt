@@ -33,6 +33,7 @@ import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import fr.isen.caliendo.androiderestaurant.model.Data
 import fr.isen.caliendo.androiderestaurant.model.DataResult
+import fr.isen.caliendo.androiderestaurant.model.Items
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import org.json.JSONArray
 import org.json.JSONException
@@ -68,7 +69,9 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
             fontSize = 24.sp
         ),
         textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth().padding(top = 32.dp)
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 32.dp)
     )
 }
 
@@ -77,29 +80,19 @@ fun DishesList(context: Context, categoryName: String) {
     val queue = remember { Volley.newRequestQueue(context) }
     val url = "http://test.api.catering.bluecodegames.com/menu"
     val params = JSONObject().apply { put("id_shop", "1") }
-    val dishes = remember { mutableStateOf<List<Data>>(emptyList()) }
+    val dishes = remember { mutableStateOf<List<Items>>(listOf()) } // Utilisez le type réel Items ici
 
-    // Utilisation de LaunchedEffect pour lancer la demande une seule fois
-    LaunchedEffect(categoryName) { // Utilisez categoryName comme clé pour relancer l'effet si celui-ci change
+    LaunchedEffect(categoryName) {
         val request = JsonObjectRequest(Request.Method.POST, url, params, { response ->
             try {
                 val gson = Gson()
                 val dataResult = gson.fromJson(response.toString(), DataResult::class.java)
-
-                when (categoryName) {
-                    "Entrées" -> {
-                        Log.d("DishesList", "Entrées: ${dataResult.data}")
-                        dishes.value = dataResult.data
-                    }
-                    "Plats" -> {
-                        Log.d("DishesList", "Plats: ${dataResult.data}")
-                        dishes.value = dataResult.data
-                    }
-                    "Desserts" -> {
-                        Log.d("DishesList", "Desserts: ${dataResult.data}")
-                        dishes.value = dataResult.data
-                    }
-                    else -> Log.d("DishesList", "Category not found: $categoryName")
+                val menuItems = dataResult.data.firstOrNull { it.nameFr == categoryName }?.items
+                if (menuItems != null) {
+                    dishes.value = menuItems
+                } else {
+                    dishes.value = listOf() // Assurez-vous d'affecter une liste vide au lieu de null
+                    Log.d("DishesList", "Aucun plat trouvé pour la catégorie: $categoryName")
                 }
             } catch (e: JSONException) {
                 Log.e("DishesList", "Erreur lors de l'analyse JSON : $e")
@@ -116,11 +109,12 @@ fun DishesList(context: Context, categoryName: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        items(dishes.value) { dish ->
-            dish.nameFr?.let { ClickableDishItem(context, it) }
+        items(dishes.value) { item ->
+            ClickableDishItem(context, item.nameFr ?: "")
         }
     }
 }
+
 
 
 @Composable
