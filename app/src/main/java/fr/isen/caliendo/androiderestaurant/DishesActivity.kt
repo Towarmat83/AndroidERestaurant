@@ -29,6 +29,9 @@ import androidx.compose.ui.unit.sp
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.google.gson.Gson
+import fr.isen.caliendo.androiderestaurant.model.Data
+import fr.isen.caliendo.androiderestaurant.model.DataResult
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import org.json.JSONArray
 import org.json.JSONException
@@ -66,24 +69,24 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     )
 }
 
-
 @Composable
 fun DishesList(context: Context, categoryName: String) {
     val queue = remember { Volley.newRequestQueue(context) }
     val url = "http://test.api.catering.bluecodegames.com/menu"
     val params = JSONObject().apply { put("id_shop", "1") }
-    val dishesList = remember { mutableStateOf<List<String>>(listOf()) } // État pour stocker la liste des plats
 
     // Utilisation de LaunchedEffect pour lancer la demande une seule fois
     LaunchedEffect(categoryName) { // Utilisez categoryName comme clé pour relancer l'effet si celui-ci change
         val request = JsonObjectRequest(Request.Method.POST, url, params, { response ->
             try {
-                // Mise à jour de l'état avec la nouvelle liste de plats
-                dishesList.value = when (categoryName) {
-                    "Entrée" -> parseDishes(response.getJSONArray("Entrée"))
-                    "Plats" -> parseDishes(response.getJSONArray("Plats"))
-                    "Desserts" -> parseDishes(response.getJSONArray("Desserts"))
-                    else -> emptyList()
+                val gson = Gson()
+                val dataResult = gson.fromJson(response.toString(), DataResult::class.java)
+
+                when (categoryName) {
+                    "Entrées" -> Log.d("DishesList", "Entrées: ${dataResult.data}")
+                    "Plats" -> Log.d("DishesList", "Plats: ${dataResult.data}")
+                    "Desserts" -> Log.d("DishesList", "Desserts: ${dataResult.data}")
+                    else -> Log.d("DishesList", "Category not found: $categoryName")
                 }
             } catch (e: JSONException) {
                 Log.e("DishesList", "Erreur lors de l'analyse JSON : $e")
@@ -94,35 +97,10 @@ fun DishesList(context: Context, categoryName: String) {
 
         queue.add(request)
     }
-
-    // Utilisation de LazyColumn pour afficher la liste des plats, à l'extérieur de la requête réseau
-    LazyColumn(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        items(dishesList.value) { dish -> // Utiliser l'état pour alimenter LazyColumn
-            Log.d("DishesList", "Affichage du plat : $dish")
-            ClickableDishItem(context = context, name = dish)
-        }
-    }
 }
-
-private fun parseDishes(jsonArray: JSONArray): List<String> {
-    val dishesList = mutableListOf<String>()
-    try {
-        for (i in 0 until jsonArray.length()) {
-            dishesList.add(jsonArray.getString(i))
-            Log.i("DishesActivityV2", "Dish added: ${jsonArray.getString(i)}")
-        }
-    } catch (e: JSONException) {
-        Log.e("DishesActivity", "Error parsing dishes JSON: ${e.localizedMessage}")
-    }
-    return dishesList
-}
-
 
 @Composable
-fun ClickableDishItem(context: Context, name: String) { // Ajouter le paramètre context
+fun ClickableDishItem(context: Context, name: String) {
     Log.d("ClickableDishItem", "Clique sur le plat : $name")
     Text(
         text = name,
@@ -130,14 +108,13 @@ fun ClickableDishItem(context: Context, name: String) { // Ajouter le paramètre
         modifier = Modifier
             .padding(16.dp)
             .clickable {
-                navigateToDishDetails(context, name) // Utiliser le contexte ici
+                navigateToDishDetails(context, name)
             }
     )
 }
 
-
-private fun navigateToDishDetails(context: Context, dishName: String) { // Modifier la signature de la fonction
+private fun navigateToDishDetails(context: Context, dishName: String) {
     val intent = Intent(context, DetailsDishesActivity::class.java)
-    intent.putExtra("dishName", dishName) // Modifier la clé ici
+    intent.putExtra("dishName", dishName)
     context.startActivity(intent)
 }
