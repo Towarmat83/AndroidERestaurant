@@ -3,6 +3,7 @@ package fr.isen.caliendo.androiderestaurant
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -16,14 +17,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat.startActivity
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
+import org.json.JSONArray
+import org.json.JSONObject
 
 
 class DishesActivity : ComponentActivity() {
@@ -57,24 +65,48 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     )
 }
 
+
 @Composable
 fun DishesList(context: Context, categoryName: String) {
-    val dishesList = when (categoryName) {
-        "Entrées" -> listOf("Entrée 1: chat", "Entrée 2: chien", "Entrée 3: dindon")
-        "Plats" -> listOf("Plat 1: azert", "Plat 2: liqueur", "Plat 3: pikachu")
-        "Desserts" -> listOf("Dessert 1: glace", "Dessert 2: rocketo", "Dessert 3: tesla")
-        else -> emptyList()
+    val queue = remember { Volley.newRequestQueue(context) }
+    val url = "http://test.api.catering.bluecodegames.com/menu"
+    val params = JSONObject().apply { put("id_shop", "1") }
+    val dishesList = remember { mutableStateOf<List<String>>(listOf()) } // État pour stocker la liste des plats
+
+    // Utilisation de LaunchedEffect pour lancer la demande une seule fois
+    LaunchedEffect(categoryName) { // Utilisez categoryName comme clé pour relancer l'effet si celui-ci change
+        val request = JsonObjectRequest(Request.Method.POST, url, params, { response ->            // Mise à jour de l'état avec la nouvelle liste de plats
+            dishesList.value = when (categoryName) {
+                "Entrées" -> parseDishes(response.getJSONArray("entrées"))
+                "Plats" -> parseDishes(response.getJSONArray("plats"))
+                "Desserts" -> parseDishes(response.getJSONArray("desserts"))
+                else -> emptyList()
+            }
+        }, { error ->
+            Log.e("DishesActivity", "Erreur lors de la récupération des plats : $error")
+        })
+
+        queue.add(request)
     }
 
-    // Mise à jour de LazyColumn avec les alignements spécifiés
+    // Utilisation de LazyColumn pour afficher la liste des plats, à l'extérieur de la requête réseau
     LazyColumn(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        items(dishesList) { dish ->
+        items(dishesList.value) { dish -> // Utiliser l'état pour alimenter LazyColumn
             ClickableDishItem(context = context, name = dish)
         }
     }
+}
+
+private fun parseDishes(jsonArray: JSONArray): List<String> {
+    val dishesList = mutableListOf<String>()
+    for (i in 0 until jsonArray.length()) {
+        dishesList.add(jsonArray.getString(i))
+        Log.d("DishesActivity", jsonArray.getString(i))
+    }
+    return dishesList
 }
 
 
