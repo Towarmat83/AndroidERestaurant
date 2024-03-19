@@ -13,6 +13,16 @@
         android:theme="@style/Theme.AndroidERestaurant"
         tools:targetApi="31">
         <activity
+            android:name=".DetailsDishesActivity"
+            android:exported="false"
+            android:label="@string/title_activity_details_dishes"
+            android:theme="@style/Theme.AndroidERestaurant" />
+        <activity
+            android:name=".DishesActivity"
+            android:exported="false"
+            android:label="@string/title_activity_dishes"
+            android:theme="@style/Theme.AndroidERestaurant" />
+        <activity
             android:name=".HomeActivity"
             android:exported="true"
             android:theme="@style/Theme.AndroidERestaurant">
