@@ -31,6 +31,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 
 
@@ -75,15 +76,20 @@ fun DishesList(context: Context, categoryName: String) {
 
     // Utilisation de LaunchedEffect pour lancer la demande une seule fois
     LaunchedEffect(categoryName) { // Utilisez categoryName comme clé pour relancer l'effet si celui-ci change
-        val request = JsonObjectRequest(Request.Method.POST, url, params, { response ->            // Mise à jour de l'état avec la nouvelle liste de plats
-            dishesList.value = when (categoryName) {
-                "Entrées" -> parseDishes(response.getJSONArray("entrées"))
-                "Plats" -> parseDishes(response.getJSONArray("plats"))
-                "Desserts" -> parseDishes(response.getJSONArray("desserts"))
-                else -> emptyList()
+        val request = JsonObjectRequest(Request.Method.POST, url, params, { response ->
+            try {
+                // Mise à jour de l'état avec la nouvelle liste de plats
+                dishesList.value = when (categoryName) {
+                    "Entrée" -> parseDishes(response.getJSONArray("Entrée"))
+                    "Plats" -> parseDishes(response.getJSONArray("Plats"))
+                    "Desserts" -> parseDishes(response.getJSONArray("Desserts"))
+                    else -> emptyList()
+                }
+            } catch (e: JSONException) {
+                Log.e("DishesList", "Erreur lors de l'analyse JSON : $e")
             }
         }, { error ->
-            Log.e("DishesActivity", "Erreur lors de la récupération des plats : $error")
+            Log.e("DishesList", "Erreur lors de la récupération des plats : $error")
         })
 
         queue.add(request)
@@ -95,6 +101,7 @@ fun DishesList(context: Context, categoryName: String) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         items(dishesList.value) { dish -> // Utiliser l'état pour alimenter LazyColumn
+            Log.d("DishesList", "Affichage du plat : $dish")
             ClickableDishItem(context = context, name = dish)
         }
     }
@@ -102,9 +109,13 @@ fun DishesList(context: Context, categoryName: String) {
 
 private fun parseDishes(jsonArray: JSONArray): List<String> {
     val dishesList = mutableListOf<String>()
-    for (i in 0 until jsonArray.length()) {
-        dishesList.add(jsonArray.getString(i))
-        Log.d("DishesActivity", jsonArray.getString(i))
+    try {
+        for (i in 0 until jsonArray.length()) {
+            dishesList.add(jsonArray.getString(i))
+            Log.i("DishesActivityV2", "Dish added: ${jsonArray.getString(i)}")
+        }
+    } catch (e: JSONException) {
+        Log.e("DishesActivity", "Error parsing dishes JSON: ${e.localizedMessage}")
     }
     return dishesList
 }
@@ -112,6 +123,7 @@ private fun parseDishes(jsonArray: JSONArray): List<String> {
 
 @Composable
 fun ClickableDishItem(context: Context, name: String) { // Ajouter le paramètre context
+    Log.d("ClickableDishItem", "Clique sur le plat : $name")
     Text(
         text = name,
         style = MaterialTheme.typography.bodyLarge,
@@ -122,6 +134,7 @@ fun ClickableDishItem(context: Context, name: String) { // Ajouter le paramètre
             }
     )
 }
+
 
 private fun navigateToDishDetails(context: Context, dishName: String) { // Modifier la signature de la fonction
     val intent = Intent(context, DetailsDishesActivity::class.java)
