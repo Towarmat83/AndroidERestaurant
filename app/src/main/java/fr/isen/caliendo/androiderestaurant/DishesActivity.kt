@@ -133,9 +133,7 @@ fun ClickableDishItem(item: Items) {
             data = item.images.firstOrNull(),
             builder = {
                 crossfade(true)
-                // Spécifiez ici l'image à utiliser en cas d'échec du chargement de l'image principale
-                error(R.drawable.rocketogusto) // Assurez-vous d'avoir une image par défaut dans les ressources drawable
-                // Ajoutez également une image placeholder si nécessaire
+                error(R.drawable.rocketogusto)
                 placeholder(R.drawable.rocketogusto)
             }
         )
@@ -159,6 +157,15 @@ fun ClickableDishItem(item: Items) {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp)
         )
+        item.prices.firstOrNull()?.let { price ->
+            Text(
+                text = "Prix: ${price.price}€", // Supposons que le prix est déjà dans la bonne devise
+                color = Color.White,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
     }
 }
 
