@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.volley)
     implementation(libs.gson)
+    implementation("io.coil-kt:coil-compose:2.6.0")
     implementation(libs.androidx.tools.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

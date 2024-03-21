@@ -6,14 +6,16 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,19 +25,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
-import fr.isen.caliendo.androiderestaurant.model.Data
 import fr.isen.caliendo.androiderestaurant.model.DataResult
 import fr.isen.caliendo.androiderestaurant.model.Items
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
-import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -110,25 +115,66 @@ fun DishesList(context: Context, categoryName: String) {
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         items(dishes.value) { item ->
-            ClickableDishItem(context, item.nameFr ?: "")
+            ClickableDishItem(item)
         }
     }
 }
 
 
+@Composable
+fun ClickableDishItem(item: Items) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        val painter = rememberImagePainter(
+            data = item.images.firstOrNull(),
+            builder = {
+                crossfade(true)
+            }
+        )
+
+        // Check if the image URL is valid
+        val isValidUrl = item.images.firstOrNull()?.isNotEmpty() ?: false
+
+        if (isValidUrl) {
+            Image(
+                painter = painter,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(300.dp)
+                    .padding(4.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .fillMaxWidth(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            DefaultImage(modifier = Modifier.size(300.dp))
+        }
+
+        Text(
+            text = item.nameFr ?: "",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+    }
+}
+
 
 @Composable
-fun ClickableDishItem(context: Context, name: String) {
-    Log.d("ClickableDishItem", "Clique sur le plat : $name")
-    Text(
-        text = name,
-        style = MaterialTheme.typography.bodyLarge,
-        textAlign = TextAlign.Center,
-        modifier = Modifier
-            .padding(16.dp)
-            .clickable {
-                navigateToDishDetails(context, name)
-            }
+fun DefaultImage(modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(id = R.drawable.rocketogusto), // Assuming you have a default image resource
+        contentDescription = null,
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .fillMaxWidth(),
+        contentScale = ContentScale.Crop
     )
 }
 
