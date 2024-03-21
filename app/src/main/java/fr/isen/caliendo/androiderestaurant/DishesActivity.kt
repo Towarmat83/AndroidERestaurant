@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -129,30 +128,28 @@ fun ClickableDishItem(item: Items) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Utilisation de Coil pour charger l'image avec gestion d'erreur
         val painter = rememberImagePainter(
             data = item.images.firstOrNull(),
             builder = {
                 crossfade(true)
+                // Spécifiez ici l'image à utiliser en cas d'échec du chargement de l'image principale
+                error(R.drawable.rocketogusto) // Assurez-vous d'avoir une image par défaut dans les ressources drawable
+                // Ajoutez également une image placeholder si nécessaire
+                placeholder(R.drawable.rocketogusto)
             }
         )
 
-        // Check if the image URL is valid
-        val isValidUrl = item.images.firstOrNull()?.isNotEmpty() ?: false
-
-        if (isValidUrl) {
-            Image(
-                painter = painter,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(300.dp)
-                    .padding(4.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .fillMaxWidth(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            DefaultImage(modifier = Modifier.size(300.dp))
-        }
+        Image(
+            painter = painter,
+            contentDescription = null,
+            modifier = Modifier
+                .size(300.dp)
+                .padding(4.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .fillMaxWidth(),
+            contentScale = ContentScale.Crop
+        )
 
         Text(
             text = item.nameFr ?: "",
@@ -164,20 +161,6 @@ fun ClickableDishItem(item: Items) {
         )
     }
 }
-
-
-@Composable
-fun DefaultImage(modifier: Modifier = Modifier) {
-    Image(
-        painter = painterResource(id = R.drawable.rocketogusto), // Assuming you have a default image resource
-        contentDescription = null,
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .fillMaxWidth(),
-        contentScale = ContentScale.Crop
-    )
-}
-
 
 private fun navigateToDishDetails(context: Context, dishName: String) {
     val intent = Intent(context, DetailsDishesActivity::class.java)
