@@ -1,5 +1,6 @@
 package fr.isen.caliendo.androiderestaurant
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -178,6 +179,12 @@ suspend fun addToCart(
     // Affichez un message de confirmation
     Toast.makeText(activity, "Plat ajouté au panier", Toast.LENGTH_SHORT).show()
     Log.d("DetailsDishesActivity2", "Toast Affiché")
+
+    // Après avoir sauvegardé le panier, mettez à jour le nombre d'articles dans les SharedPreferences
+    val sharedPreferences = activity.getSharedPreferences("userPreferences", Context.MODE_PRIVATE)
+    val editor = sharedPreferences.edit()
+    editor.putInt("cartItemCount", quantity) // Utilisez la quantité actuelle pour cet exemple, mais vous devriez calculer le total d'articles dans le panier si nécessaire.
+    editor.apply()
 
     snackbarHostState.showSnackbar(
         message = "Plat ajouté au panier",
