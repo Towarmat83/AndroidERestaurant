@@ -4,25 +4,35 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import fr.isen.caliendo.androiderestaurant.model.Ingredients
@@ -68,12 +78,51 @@ fun DetailsDishScreen(dishName: String, images: List<String>, ingredients: List<
         verticalArrangement = Arrangement.Center
     ) {
         DishName(name = dishName, modifier = Modifier.weight(1f))
-       // ImagesList(images = images)
+        ImagesList(images = images)
         IngredientsList(ingredients = ingredients, modifier = Modifier.weight(1f))
        // PricesList(prices = prices)
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun ImagesList(images: List<String>) {
+    val pagerState = rememberPagerState()
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        if (images.isNotEmpty()) {
+            HorizontalPager(
+                count = images.size,
+                state = pagerState,
+                modifier = Modifier
+                    .height(300.dp)
+                    .fillMaxWidth()
+            ) { page ->
+                val painter = rememberImagePainter(
+                    data = images.getOrNull(page),
+                    builder = {
+                        crossfade(true)
+                        error(R.drawable.rocketogusto) // Image par défaut en cas d'erreur de chargement
+                        placeholder(R.drawable.rocketogusto) // Image de chargement
+                    }
+                )
+
+                Image(
+                    painter = painter,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(300.dp)
+                        .padding(4.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .fillMaxWidth(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        } else {
+            error("Aucune image trouvée")
+        }
+    }
+}
 
 @Composable
 fun DishName(name: String, modifier: Modifier = Modifier) {
