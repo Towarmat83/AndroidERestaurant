@@ -127,7 +127,7 @@ fun ClickableDishItem(context: Context, item: Items) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .clickable { navigateToDishDetails(context, item.nameFr ?: "") }, // Ajout du modificateur clickable
+            .clickable { navigateToDishDetails(context, item.nameFr ?: "", item.images) },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val painter = rememberImagePainter(
@@ -171,8 +171,12 @@ fun ClickableDishItem(context: Context, item: Items) {
     }
 }
 
-private fun navigateToDishDetails(context: Context, dishName: String) {
-    val intent = Intent(context, DetailsDishesActivity::class.java)
-    intent.putExtra("dishName", dishName)
+private fun navigateToDishDetails(context: Context, dishName: String, images: List<String>) {
+    val intent = Intent(context, DetailsDishesActivity::class.java).apply {
+        putExtra("dishName", dishName)
+        // Convertissez la liste des images en JSON String
+        val imagesJson = Gson().toJson(images)
+        putExtra("imagesJson", imagesJson)
+    }
     context.startActivity(intent)
 }
