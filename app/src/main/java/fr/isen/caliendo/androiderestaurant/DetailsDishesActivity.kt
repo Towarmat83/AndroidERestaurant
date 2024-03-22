@@ -19,10 +19,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -91,7 +95,7 @@ fun DetailsDishScreen(
     ingredients: List<Ingredients>,
     prices: List<Prices>,
 ) {
-    var showPrice by remember { mutableStateOf(false) }
+    var quantity by remember { mutableStateOf(1) }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -101,17 +105,12 @@ fun DetailsDishScreen(
         DishName(name = dishName, modifier = Modifier.weight(1f))
         ImagesList(images = images)
         IngredientsList(ingredients = ingredients, modifier = Modifier.weight(1f))
-        // PricesList(prices = prices)
-
-        // Bouton pour afficher le prix
-        TextButton(onClick = { showPrice = !showPrice }) {
-            Text(text = if (showPrice) "Masquer le prix" else "Afficher le prix")
-        }
-
-        // Affichage du prix
-        if (showPrice) {
-            PricesList(prices = prices)
-        }
+        QuantitySelector(
+            quantity = quantity,
+            onIncrease = { quantity++ },
+            onDecrease = { if (quantity > 1) quantity-- }
+        )
+        PricesList(prices = prices)
     }
 }
 
@@ -224,19 +223,36 @@ fun IngredientsList(ingredients: List<Ingredients>, modifier: Modifier = Modifie
 @Composable
 fun PricesList(prices: List<Prices>) {
     Column(modifier = Modifier.padding(16.dp)) {
-        Text(
-            text = "Prix :",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
         prices.forEach { price ->
             Text(
                 text = "Total: ${price.price} €", // À adapter selon la structure de votre modèle de données
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }
     }
 }
 
+@Composable
+fun QuantitySelector(
+    quantity: Int,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit
+) {
+    Row {
+        Button(onClick = onDecrease) {
+            Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Decrease")
+        }
+        Text(
+            text = "$quantity",
+            fontSize = 36.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+        )
+        Button(onClick = onIncrease) {
+            Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Increase")
+        }
+    }
+}
