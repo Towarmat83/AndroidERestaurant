@@ -25,13 +25,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -125,30 +129,39 @@ fun DetailsDishScreen(
     val totalPrice = pricePerDish?.times(quantity) ?: 0f
     val scope = rememberCoroutineScope()
 
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        DishName(name = dishName, modifier = Modifier.weight(1f))
-        ImagesList(images = images)
-        IngredientsList(ingredients = ingredients, modifier = Modifier.weight(1f))
-        QuantitySelector(
-            quantity = quantity,
-            onIncrease = { quantity++ },
-            onDecrease = { if (quantity > 1) quantity-- }
-        )
-        PricesList(prices = prices, totalPrices = totalPrice)
-        Button(onClick = {
-            scope.launch {
-                addToCart(dishName, quantity, totalPrice, activity, snackbarHostState)
+    AndroidERestaurantTheme {
+        Scaffold(
+            topBar = { RocketoTopBar() }, // Assurez-vous que RocketoTopBar() est définie comme expliqué précédemment
+            content = { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    DishName(name = dishName, modifier = Modifier.weight(1f))
+                    ImagesList(images = images)
+                    IngredientsList(ingredients = ingredients, modifier = Modifier.weight(1f))
+                    QuantitySelector(
+                        quantity = quantity,
+                        onIncrease = { quantity++ },
+                        onDecrease = { if (quantity > 1) quantity-- }
+                    )
+                    PricesList(prices = prices, totalPrices = totalPrice)
+                    Button(onClick = {
+                        scope.launch {
+                            addToCart(dishName, quantity, totalPrice, activity, snackbarHostState)
+                        }
+                    }) {
+                        Text("Ajouter au panier")
+                    }
+                }
             }
-        }) {
-            Text("Ajouter au panier")
-        }
+        )
     }
 }
+
 
 suspend fun addToCart(
     dishName: String,
@@ -343,5 +356,23 @@ fun QuantitySelector(
             Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Increase")
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RocketoTopBar() {
+    val couleurOrange = "#fa9b05"
+    val couleurWhite = "#ffffff"
+    val myColor = Color(android.graphics.Color.parseColor(couleurOrange))
+    val myColor2 = Color(android.graphics.Color.parseColor(couleurWhite))
+    TopAppBar(
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = myColor,
+            titleContentColor = myColor2,
+        ),
+        title = {
+            Text("Rocketo Gusto")
+        }
+    )
 }
 
