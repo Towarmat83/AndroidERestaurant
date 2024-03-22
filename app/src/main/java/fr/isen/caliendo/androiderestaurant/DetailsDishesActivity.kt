@@ -51,8 +51,8 @@ class DetailsDishesActivity : ComponentActivity() {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Greeting2(dishName)
-                        ImageCarousel(images)
                         IngredientList(ingredients = ingredients, modifier = Modifier.padding(top = 16.dp))
+                        //ImageCarousel(images)
                     }
                 }
             }
@@ -110,9 +110,12 @@ fun ImageCarousel(images: List<String>, modifier: Modifier = Modifier) {
 fun IngredientList(ingredients: List<Ingredients>, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         for (ingredient in ingredients) {
+            // Log sur le nom de l'ingredient
+            Log.d("DetailsDishesActivity2", ingredient.nameFr ?: "")
             Text(
                 text = ingredient.nameFr ?: "",
                 style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(8.dp)
             )
         }
