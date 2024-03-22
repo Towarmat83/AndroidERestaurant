@@ -52,9 +52,12 @@ class DetailsDishesActivity : ComponentActivity() {
         val ingredientsJson = intent.getStringExtra("ingredients") ?: ""
         val pricesJson = intent.getStringExtra("prices") ?: ""
 
-        val images: List<String> = Gson().fromJson(imagesJson, object : TypeToken<List<String>>() {}.type)
-        val ingredients: List<Ingredients> = Gson().fromJson(ingredientsJson, object : TypeToken<List<Ingredients>>() {}.type)
-        val prices: List<Prices> = Gson().fromJson(pricesJson, object : TypeToken<List<Prices>>() {}.type)
+        val images: List<String> =
+            Gson().fromJson(imagesJson, object : TypeToken<List<String>>() {}.type)
+        val ingredients: List<Ingredients> =
+            Gson().fromJson(ingredientsJson, object : TypeToken<List<Ingredients>>() {}.type)
+        val prices: List<Prices> =
+            Gson().fromJson(pricesJson, object : TypeToken<List<Prices>>() {}.type)
 
         Log.d("DetailsDishesActivity2", "onCreate: $dishName, $images, $ingredients, $prices")
 
@@ -64,9 +67,12 @@ class DetailsDishesActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        DetailsDishScreen(dishName = dishName, images = images, ingredients = ingredients, prices = prices)
-                    }
+                    DetailsDishScreen(
+                        dishName = dishName,
+                        images = images,
+                        ingredients = ingredients,
+                        prices = prices
+                    )
                 }
             }
         }
@@ -74,7 +80,12 @@ class DetailsDishesActivity : ComponentActivity() {
 }
 
 @Composable
-fun DetailsDishScreen(dishName: String, images: List<String>, ingredients: List<Ingredients>, prices: List<Prices>) {
+fun DetailsDishScreen(
+    dishName: String,
+    images: List<String>,
+    ingredients: List<Ingredients>,
+    prices: List<Prices>,
+) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -83,22 +94,21 @@ fun DetailsDishScreen(dishName: String, images: List<String>, ingredients: List<
         DishName(name = dishName, modifier = Modifier.weight(1f))
         ImagesList(images = images)
         IngredientsList(ingredients = ingredients, modifier = Modifier.weight(1f))
-       // PricesList(prices = prices)
+        // PricesList(prices = prices)
     }
 }
 
 @Composable
 fun DishName(name: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(16.dp)) {
+    Column(modifier = modifier.padding(8.dp)) {
         Text(
             text = name,
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
-                fontSize = 40.sp,
+                fontSize = 32.sp,
             ),
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .fillMaxSize()
                 .padding(top = 32.dp)
         )
     }
@@ -109,7 +119,7 @@ fun DishName(name: String, modifier: Modifier = Modifier) {
 fun ImagesList(images: List<String>) {
     val pagerState = rememberPagerState()
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(modifier = Modifier.padding(1.dp)) {
         if (images.isNotEmpty()) {
             HorizontalPager(
                 count = images.size,
@@ -147,7 +157,8 @@ fun ImagesList(images: List<String>) {
                 horizontalArrangement = Arrangement.Center
             ) {
                 repeat(images.size) { iteration ->
-                    val color = if (pagerState.currentPage == iteration) Color.DarkGray else Color.LightGray
+                    val color =
+                        if (pagerState.currentPage == iteration) Color.DarkGray else Color.LightGray
                     Box(
                         modifier = Modifier
                             .padding(2.dp)
