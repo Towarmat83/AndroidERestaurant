@@ -7,16 +7,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,6 +22,8 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import fr.isen.caliendo.androiderestaurant.model.Ingredients
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
 
 
@@ -35,9 +33,15 @@ class DetailsDishesActivity : ComponentActivity() {
         val dishName = intent.getStringExtra("dishName") ?: "Plat Inconnu"
         val imagesJson = intent.getStringExtra("imagesJson") ?: "[]"
         val images = Gson().fromJson(imagesJson, Array<String>::class.java).toList()
+        val ingredientsJson = intent.getStringExtra("ingredientsJson") ?: "[]"
+        val ingredientsType = object : TypeToken<List<Ingredients>>() {}.type
+        val ingredients = Gson().fromJson<List<Ingredients>>(ingredientsJson, ingredientsType)
+
+
 
         // Log poour connaitre les images
         Log.d("DetailsDishesActivity2", images.toString())
+        Log.d("DetailsDishesActivity2", ingredients.toString())
 
         setContent {
             AndroidERestaurantTheme {
@@ -48,6 +52,7 @@ class DetailsDishesActivity : ComponentActivity() {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Greeting2(dishName)
                         ImageCarousel(images)
+                        IngredientList(ingredients = ingredients, modifier = Modifier.padding(top = 16.dp))
                     }
                 }
             }
@@ -75,40 +80,41 @@ fun Greeting2(name: String, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun ImageCarousel(images: List<String>, modifier: Modifier = Modifier) {
-    // Créez l'état du pager, qui contrôle quel élément de la liste est actuellement visible
     val pagerState = rememberPagerState()
 
     Log.d("DetailsDishesActivity2", images.toString())
 
-    if (images.isNotEmpty()) {
-        HorizontalPager(
-            count = images.size,
-            state = pagerState,
-            modifier = Modifier
-                .height(200.dp)
-                .fillMaxWidth()
-        ) { page ->
-            Image(
-                painter = rememberImagePainter(
-                    data = images[page],
-                    builder = {
-                        crossfade(true)
-                        error(R.drawable.rocketogusto)
-                    }
-                ),
-                contentDescription = "Dish Image",
-                modifier = Modifier.fillMaxWidth(),
-                contentScale = ContentScale.Crop
+    HorizontalPager(
+        count = images.size,
+        state = pagerState,
+        modifier = Modifier.fillMaxSize()
+    ) { page ->
+        Image(
+            painter = rememberImagePainter(
+                data = images[page],
+                builder = {
+                    crossfade(true)
+                    error(R.drawable.rocketogusto) // Assurez-vous d'avoir une image par défaut dans vos ressources
+                    placeholder(R.drawable.rocketogusto)
+                }
+            ),
+            contentDescription = "Image $page",
+            modifier = Modifier.fillMaxSize()
+        )
+
+
+    }
+}
+
+@Composable
+fun IngredientList(ingredients: List<Ingredients>, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        for (ingredient in ingredients) {
+            Text(
+                text = ingredient.nameFr ?: "",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(8.dp)
             )
         }
-    } else {
-        Image(
-            painter = painterResource(id = R.drawable.rocketogusto),
-            contentDescription = "Default Image",
-            modifier = Modifier
-                .height(200.dp)
-                .fillMaxWidth(),
-            contentScale = ContentScale.Crop
-        )
     }
 }

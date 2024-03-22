@@ -39,6 +39,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import fr.isen.caliendo.androiderestaurant.model.DataResult
+import fr.isen.caliendo.androiderestaurant.model.Ingredients
 import fr.isen.caliendo.androiderestaurant.model.Items
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import org.json.JSONException
@@ -127,7 +128,9 @@ fun ClickableDishItem(context: Context, item: Items) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .clickable { navigateToDishDetails(context, item.nameFr ?: "", item.images) },
+            .clickable {
+                navigateToDishDetails(context, item.nameFr ?: "", item.images, item.ingredients)
+            },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val painter = rememberImagePainter(
@@ -171,12 +174,13 @@ fun ClickableDishItem(context: Context, item: Items) {
     }
 }
 
-private fun navigateToDishDetails(context: Context, dishName: String, images: List<String>) {
+private fun navigateToDishDetails(context: Context, dishName: String, images: List<String>, ingredients: List<Ingredients>) {
     val intent = Intent(context, DetailsDishesActivity::class.java).apply {
         putExtra("dishName", dishName)
-        // Convertissez la liste des images en JSON String
         val imagesJson = Gson().toJson(images)
         putExtra("imagesJson", imagesJson)
+        val ingredientsJson = Gson().toJson(ingredients)
+        putExtra("ingredientsJson", ingredientsJson)
     }
     context.startActivity(intent)
 }
