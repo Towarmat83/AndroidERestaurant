@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -114,26 +115,26 @@ fun DishesList(context: Context, categoryName: String) {
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         items(dishes.value) { item ->
-            ClickableDishItem(item)
+            ClickableDishItem(context = context, item = item)
         }
     }
 }
 
 
 @Composable
-fun ClickableDishItem(item: Items) {
+fun ClickableDishItem(context: Context, item: Items) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp)
+            .clickable { navigateToDishDetails(context, item.nameFr ?: "") }, // Ajout du modificateur clickable
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Utilisation de Coil pour charger l'image avec gestion d'erreur
         val painter = rememberImagePainter(
             data = item.images.firstOrNull(),
             builder = {
                 crossfade(true)
-                error(R.drawable.rocketogusto)
+                error(R.drawable.rocketogusto) // Assurez-vous d'avoir une image par défaut dans vos ressources
                 placeholder(R.drawable.rocketogusto)
             }
         )
@@ -157,9 +158,10 @@ fun ClickableDishItem(item: Items) {
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp)
         )
+
         item.prices.firstOrNull()?.let { price ->
             Text(
-                text = "Prix: ${price.price}€", // Supposons que le prix est déjà dans la bonne devise
+                text = "Prix: ${price.price}€",
                 color = Color.White,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
