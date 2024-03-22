@@ -22,7 +22,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -86,6 +91,8 @@ fun DetailsDishScreen(
     ingredients: List<Ingredients>,
     prices: List<Prices>,
 ) {
+    var showPrice by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -95,6 +102,16 @@ fun DetailsDishScreen(
         ImagesList(images = images)
         IngredientsList(ingredients = ingredients, modifier = Modifier.weight(1f))
         // PricesList(prices = prices)
+
+        // Bouton pour afficher le prix
+        TextButton(onClick = { showPrice = !showPrice }) {
+            Text(text = if (showPrice) "Masquer le prix" else "Afficher le prix")
+        }
+
+        // Affichage du prix
+        if (showPrice) {
+            PricesList(prices = prices)
+        }
     }
 }
 
@@ -200,6 +217,25 @@ fun IngredientsList(ingredients: List<Ingredients>, modifier: Modifier = Modifie
                 }
             }
             Spacer(modifier = Modifier.height(8.dp)) // Espacement entre les lignes d'ingrédients
+        }
+    }
+}
+
+@Composable
+fun PricesList(prices: List<Prices>) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+            text = "Prix :",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        prices.forEach { price ->
+            Text(
+                text = "Total: ${price.price} €", // À adapter selon la structure de votre modèle de données
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
         }
     }
 }
