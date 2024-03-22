@@ -2,6 +2,7 @@ package fr.isen.caliendo.androiderestaurant
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -25,12 +26,16 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +55,8 @@ import com.google.gson.reflect.TypeToken
 import fr.isen.caliendo.androiderestaurant.model.Ingredients
 import fr.isen.caliendo.androiderestaurant.model.Prices
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
+import kotlinx.coroutines.launch
+import java.io.File
 
 
 class DetailsDishesActivity : ComponentActivity() {
@@ -71,16 +78,30 @@ class DetailsDishesActivity : ComponentActivity() {
         Log.d("DetailsDishesActivity2", "onCreate: $dishName, $images, $ingredients, $prices")
 
         setContent {
+            val snackbarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
+
             AndroidERestaurantTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    DetailsDishScreen(
-                        dishName = dishName,
-                        images = images,
-                        ingredients = ingredients,
-                        prices = prices
+                // Box permet de superposer le SnackbarHost sur le reste de l'UI
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        // Votre UI principale ici
+                        DetailsDishScreen(
+                            dishName = dishName,
+                            images = images,
+                            ingredients = ingredients,
+                            prices = prices,
+                            activity = this@DetailsDishesActivity,
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+                    // Placement du SnackbarHost au-dessus de l'UI
+                    SnackbarHost(
+                        hostState = snackbarHostState,
+                        modifier = Modifier.align(Alignment.BottomCenter)
                     )
                 }
             }
@@ -88,16 +109,21 @@ class DetailsDishesActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun DetailsDishScreen(
     dishName: String,
     images: List<String>,
     ingredients: List<Ingredients>,
     prices: List<Prices>,
+    activity: ComponentActivity,
+    snackbarHostState: SnackbarHostState,
 ) {
     var quantity by remember { mutableStateOf(0) }
     val pricePerDish = prices.first().price?.toFloat()
     val totalPrice = pricePerDish?.times(quantity) ?: 0f
+    val scope = rememberCoroutineScope()
+
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -113,12 +139,66 @@ fun DetailsDishScreen(
             onDecrease = { if (quantity > 1) quantity-- }
         )
         PricesList(prices = prices, totalPrices = totalPrice)
+        Button(onClick = {
+            scope.launch {
+                addToCart(dishName, quantity, totalPrice, activity, snackbarHostState)
+            }
+        }) {
+            Text("Ajouter au panier")
+        }
     }
 }
 
+suspend fun addToCart(
+    dishName: String,
+    quantity: Int,
+    totalPrice: Float,
+    activity: ComponentActivity,
+    snackbarHostState: SnackbarHostState,
+) {
+    // Ajoutez le plat au panier
+    Log.i("DetailsDishesActivity2", "addToCart: $dishName, $quantity, $totalPrice")
+
+    // Création de l'objet CartItem
+    val cartItem = CartItem(dishName, quantity, totalPrice)
+    // Ici, pour l'exemple, nous utilisons une liste avec un seul élément.
+    // Dans une application réelle, vous récupéreriez probablement la liste existante et l'ajouteriez à celle-ci.
+    val cartItems = mutableListOf(cartItem)
+
+    // Conversion de la liste des éléments du panier en chaîne JSON
+    val cartJson = Gson().toJson(cartItems)
+
+    val file = File(activity.filesDir, "cart.json")
+
+    // Écriture de la chaîne JSON dans un fichier
+    file.writeText(cartJson)
+
+    Log.d("DetailsDishesActivity2", "addToCart: $cartJson")
+
+    // Affichez un message de confirmation
+    Toast.makeText(activity, "Plat ajouté au panier", Toast.LENGTH_SHORT).show()
+    Log.d("DetailsDishesActivity2", "Toast Affiché")
+
+    snackbarHostState.showSnackbar(
+        message = "Plat ajouté au panier",
+        actionLabel = "Continuer",
+    ).also { result ->
+        if (result == SnackbarResult.ActionPerformed) {
+            activity.finish()
+        }
+    }
+}
+
+
+data class CartItem(
+    val dishName: String,
+    val quantity: Int,
+    val totalPrice: Float,
+)
+
 @Composable
 fun DishName(name: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(8.dp)) {
+    Column(modifier = modifier.padding(1.dp)) {
         Text(
             text = name,
             style = MaterialTheme.typography.headlineMedium.copy(
@@ -143,7 +223,7 @@ fun ImagesList(images: List<String>) {
                 count = images.size,
                 state = pagerState,
                 modifier = Modifier
-                    .height(300.dp)
+                    .height(200.dp)
                     .fillMaxWidth()
             ) { page ->
                 val painter = rememberImagePainter(
@@ -159,7 +239,7 @@ fun ImagesList(images: List<String>) {
                     painter = painter,
                     contentDescription = null,
                     modifier = Modifier
-                        .size(300.dp)
+                        .size(200.dp)
                         .padding(4.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .fillMaxWidth(),
@@ -191,7 +271,6 @@ fun ImagesList(images: List<String>) {
         }
     }
 }
-
 
 @Composable
 fun IngredientsList(ingredients: List<Ingredients>, modifier: Modifier = Modifier) {
@@ -240,7 +319,7 @@ fun PricesList(prices: List<Prices>, totalPrices: Float) {
 fun QuantitySelector(
     quantity: Int,
     onIncrease: () -> Unit,
-    onDecrease: () -> Unit
+    onDecrease: () -> Unit,
 ) {
     Row {
         Button(onClick = onDecrease) {
@@ -258,3 +337,4 @@ fun QuantitySelector(
         }
     }
 }
+
