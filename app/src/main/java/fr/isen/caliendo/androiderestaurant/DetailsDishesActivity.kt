@@ -95,7 +95,9 @@ fun DetailsDishScreen(
     ingredients: List<Ingredients>,
     prices: List<Prices>,
 ) {
-    var quantity by remember { mutableStateOf(1) }
+    var quantity by remember { mutableStateOf(0) }
+    val pricePerDish = prices.first().price?.toFloat()
+    val totalPrice = pricePerDish?.times(quantity) ?: 0f
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -110,7 +112,7 @@ fun DetailsDishScreen(
             onIncrease = { quantity++ },
             onDecrease = { if (quantity > 1) quantity-- }
         )
-        PricesList(prices = prices)
+        PricesList(prices = prices, totalPrices = totalPrice)
     }
 }
 
@@ -221,11 +223,11 @@ fun IngredientsList(ingredients: List<Ingredients>, modifier: Modifier = Modifie
 }
 
 @Composable
-fun PricesList(prices: List<Prices>) {
+fun PricesList(prices: List<Prices>, totalPrices: Float) {
     Column(modifier = Modifier.padding(16.dp)) {
         prices.forEach { price ->
             Text(
-                text = "Total: ${price.price} €", // À adapter selon la structure de votre modèle de données
+                text = "Total: $totalPrices €", // À adapter selon la structure de votre modèle de données
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 4.dp)
