@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.volley)
     implementation(libs.gson)
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("com.google.accompanist:accompanist-pager:0.19.0")
     implementation(libs.androidx.tools.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
