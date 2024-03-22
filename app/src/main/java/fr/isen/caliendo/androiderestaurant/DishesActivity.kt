@@ -41,6 +41,7 @@ import com.google.gson.Gson
 import fr.isen.caliendo.androiderestaurant.model.DataResult
 import fr.isen.caliendo.androiderestaurant.model.Ingredients
 import fr.isen.caliendo.androiderestaurant.model.Items
+import fr.isen.caliendo.androiderestaurant.model.Prices
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import org.json.JSONException
 import org.json.JSONObject
@@ -129,7 +130,13 @@ fun ClickableDishItem(context: Context, item: Items) {
             .fillMaxWidth()
             .padding(16.dp)
             .clickable {
-                navigateToDishDetails(context, item.nameFr ?: "", item.images, item.ingredients)
+                navigateToDishDetails(
+                    context = context,
+                    dishName = item.nameFr,
+                    images = item.images,
+                    ingredients = item.ingredients,
+                    prices = item.prices
+                )
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -174,13 +181,21 @@ fun ClickableDishItem(context: Context, item: Items) {
     }
 }
 
-private fun navigateToDishDetails(context: Context, dishName: String, images: List<String>, ingredients: List<Ingredients>) {
+private fun navigateToDishDetails(
+    context: Context,
+    dishName: String?,
+    images: List<String>,
+    ingredients: List<Ingredients>,
+    prices: List<Prices>,
+) {
     val intent = Intent(context, DetailsDishesActivity::class.java).apply {
         putExtra("dishName", dishName)
-        val imagesJson = Gson().toJson(images)
-        putExtra("imagesJson", imagesJson)
-        val ingredientsJson = Gson().toJson(ingredients)
-        putExtra("ingredientsJson", ingredientsJson)
+        putExtra("images", Gson().toJson(images))
+        putExtra("ingredients", Gson().toJson(ingredients))
+        putExtra("prices", Gson().toJson(prices))
+        putExtra("dish_details", Gson().toJson(dishName))
     }
+    Log.d("DishesList2", "navigateToDishDetails: $dishName, $images, $ingredients, $prices")
     context.startActivity(intent)
 }
+

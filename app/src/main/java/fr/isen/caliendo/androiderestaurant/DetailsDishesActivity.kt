@@ -4,44 +4,46 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberImagePainter
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.rememberPagerState
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import fr.isen.caliendo.androiderestaurant.model.Ingredients
+import fr.isen.caliendo.androiderestaurant.model.Prices
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
 
 
 class DetailsDishesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dishName = intent.getStringExtra("dishName") ?: "Plat Inconnu"
-        val imagesJson = intent.getStringExtra("imagesJson") ?: "[]"
-        val images = Gson().fromJson(imagesJson, Array<String>::class.java).toList()
-        val ingredientsJson = intent.getStringExtra("ingredientsJson") ?: "[]"
-        val ingredientsType = object : TypeToken<List<Ingredients>>() {}.type
-        val ingredients = Gson().fromJson<List<Ingredients>>(ingredientsJson, ingredientsType)
 
+        val dishName = intent.getStringExtra("dishName") ?: ""
+        val imagesJson = intent.getStringExtra("images") ?: ""
+        val ingredientsJson = intent.getStringExtra("ingredients") ?: ""
+        val pricesJson = intent.getStringExtra("prices") ?: ""
 
+        val images: List<String> = Gson().fromJson(imagesJson, object : TypeToken<List<String>>() {}.type)
+        val ingredients: List<Ingredients> = Gson().fromJson(ingredientsJson, object : TypeToken<List<Ingredients>>() {}.type)
+        val prices: List<Prices> = Gson().fromJson(pricesJson, object : TypeToken<List<Prices>>() {}.type)
 
-        // Log poour connaitre les images
-        Log.d("DetailsDishesActivity2", images.toString())
-        Log.d("DetailsDishesActivity2", ingredients.toString())
+        Log.d("DetailsDishesActivity2", "onCreate: $dishName, $images, $ingredients, $prices")
 
         setContent {
             AndroidERestaurantTheme {
@@ -50,9 +52,7 @@ class DetailsDishesActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Greeting2(dishName)
-                        IngredientList(ingredients = ingredients, modifier = Modifier.padding(top = 16.dp))
-                        //ImageCarousel(images)
+                        DetailsDishScreen(dishName = dishName, images = images, ingredients = ingredients, prices = prices)
                     }
                 }
             }
@@ -61,13 +61,28 @@ class DetailsDishesActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting2(name: String, modifier: Modifier = Modifier) {
+fun DetailsDishScreen(dishName: String, images: List<String>, ingredients: List<Ingredients>, prices: List<Prices>) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        DishName(name = dishName, modifier = Modifier.weight(1f))
+       // ImagesList(images = images)
+        IngredientsList(ingredients = ingredients, modifier = Modifier.weight(1f))
+       // PricesList(prices = prices)
+    }
+}
+
+
+@Composable
+fun DishName(name: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier.padding(16.dp)) {
         Text(
             text = name,
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
+                fontSize = 24.sp,
             ),
             textAlign = TextAlign.Center,
             modifier = Modifier
@@ -77,47 +92,32 @@ fun Greeting2(name: String, modifier: Modifier = Modifier) {
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun ImageCarousel(images: List<String>, modifier: Modifier = Modifier) {
-    val pagerState = rememberPagerState()
-
-    Log.d("DetailsDishesActivity2", images.toString())
-
-    HorizontalPager(
-        count = images.size,
-        state = pagerState,
-        modifier = Modifier.fillMaxSize()
-    ) { page ->
-        Image(
-            painter = rememberImagePainter(
-                data = images[page],
-                builder = {
-                    crossfade(true)
-                    error(R.drawable.rocketogusto) // Assurez-vous d'avoir une image par défaut dans vos ressources
-                    placeholder(R.drawable.rocketogusto)
+fun IngredientsList(ingredients: List<Ingredients>, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.padding(16.dp)) {
+        val rows = ingredients.chunked(4) // Divisez la liste en chunks de 4 ingrédients par ligne
+        rows.forEach { row ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                row.forEach { ingredient ->
+                    Log.i("DetailsDishesActivity2", "IngredientsList: ${ingredient.nameFr}")
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.Gray, // Couleur de fond de la pastille
+                        modifier = Modifier.padding(4.dp) // Espacement autour de chaque pastille
+                    ) {
+                        Text(
+                            text = "${ingredient.nameFr}",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(8.dp), // Espacement à l'intérieur de chaque pastille
+                            textAlign = TextAlign.Center, // Centrer le texte horizontalement
+                            color = Color.White, // Couleur du texte
+                            fontSize = 14.sp // Taille de la police
+                        )
+                    }
                 }
-            ),
-            contentDescription = "Image $page",
-            modifier = Modifier.fillMaxSize()
-        )
-
-
-    }
-}
-
-@Composable
-fun IngredientList(ingredients: List<Ingredients>, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
-        for (ingredient in ingredients) {
-            // Log sur le nom de l'ingredient
-            Log.d("DetailsDishesActivity2", ingredient.nameFr ?: "")
-            Text(
-                text = ingredient.nameFr ?: "",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(8.dp)
-            )
+            }
+            Spacer(modifier = Modifier.height(8.dp)) // Espacement entre les lignes d'ingrédients
         }
     }
 }
+
