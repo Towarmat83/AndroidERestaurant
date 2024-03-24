@@ -101,6 +101,8 @@ class DetailsDishesActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
+
+                        val cartItemCount by remember { mutableStateOf(calculerTotalArticlesPanier()) }
                         // Votre UI principale ici
                         DetailsDishScreen(
                             dishName = dishName,
@@ -108,7 +110,8 @@ class DetailsDishesActivity : ComponentActivity() {
                             ingredients = ingredients,
                             prices = prices,
                             activity = this@DetailsDishesActivity,
-                            snackbarHostState = snackbarHostState
+                            snackbarHostState = snackbarHostState,
+                            cartItemCount = cartItemCount
                         )
                     }
                     // Placement du SnackbarHost au-dessus de l'UI
@@ -119,6 +122,16 @@ class DetailsDishesActivity : ComponentActivity() {
                 }
             }
         }
+    }
+    private fun calculerTotalArticlesPanier(): Int {
+        val cartFile = File(filesDir, "cart.json")
+        if (!cartFile.exists()) {
+            return 0
+        }
+        val cartJson = cartFile.readText()
+        val itemType = object : TypeToken<List<CartItem>>() {}.type
+        val cartItems: List<CartItem> = Gson().fromJson(cartJson, itemType)
+        return cartItems.sumOf { it.quantity }
     }
 }
 
@@ -131,6 +144,7 @@ fun DetailsDishScreen(
     prices: List<Prices>,
     activity: ComponentActivity,
     snackbarHostState: SnackbarHostState,
+    cartItemCount: Int,
 ) {
     var quantity by remember { mutableStateOf(0) }
     val pricePerDish = prices.first().price?.toFloat()
@@ -139,7 +153,7 @@ fun DetailsDishScreen(
 
     AndroidERestaurantTheme {
         Scaffold(
-            topBar = { RocketoTopBar() }, // Assurez-vous que RocketoTopBar() est définie comme expliqué précédemment
+            topBar = { RocketoTopBar(cartItemCount = cartItemCount) }, // Assurez-vous que RocketoTopBar() est définie comme expliqué précédemment
             content = { innerPadding ->
                 Column(
                     modifier = Modifier
@@ -374,7 +388,7 @@ fun QuantitySelector(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RocketoTopBar() {
+fun RocketoTopBar(cartItemCount: Int) {
     val couleurOrange = "#fa9b05"
     val couleurWhite = "#ffffff"
     val myColor = Color(android.graphics.Color.parseColor(couleurOrange))
@@ -384,15 +398,27 @@ fun RocketoTopBar() {
             containerColor = myColor,
             titleContentColor = myColor2,
         ),
-        title = {
-            Text("Rocketo Gusto")
-        },
+        title = { Text("Rocketo Gusto") },
         actions = {
-            val onCartClicked = null
-            IconButton(onClick = { onCartClicked }) {
-                Icon(Icons.Default.ShoppingCart, contentDescription = "Panier", tint = Color.Black)
+            // Affichage du nombre d'articles si supérieur à 0 à côté de l'icône du panier
+            if (cartItemCount > 0) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = cartItemCount.toString(),
+                        color = Color.White,
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                    IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
+                        Icon(Icons.Filled.ShoppingCart, contentDescription = "Panier", tint = Color.White)
+                    }
+                }
+            } else {
+                IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
+                    Icon(Icons.Filled.ShoppingCart, contentDescription = "Panier", tint = Color.White)
+                }
             }
         }
     )
 }
+
 
