@@ -24,9 +24,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -66,7 +68,13 @@ import java.io.File
 
 class DetailsDishesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        super.onCreate(savedInstanceState);
+
+        // Lire le fichier cart.json avec readText sans utiliser try catch
+        val cartFile = File("${this.filesDir}/cart.json").readText()
+
+        //Log pour lire le contenu du fichier cart.json
+        Log.d("ReadFile2", "Contenu du fichier cart.json dans DetailsDishesActivity: $cartFile")
 
         val dishName = intent.getStringExtra("dishName") ?: ""
         val imagesJson = intent.getStringExtra("images") ?: ""
@@ -175,19 +183,25 @@ suspend fun addToCart(
 
     // Création de l'objet CartItem
     val cartItem = CartItem(dishName, quantity, totalPrice)
-    // Ici, pour l'exemple, nous utilisons une liste avec un seul élément.
-    // Dans une application réelle, vous récupéreriez probablement la liste existante et l'ajouteriez à celle-ci.
-    val cartItems = mutableListOf(cartItem)
 
-    // Conversion de la liste des éléments du panier en chaîne JSON
+    // Lire le contenu existant du fichier cart.json
+    val file = File(activity.filesDir, "cart.json")
+    val existingContent = if (file.exists()) file.readText() else "[]"
+
+    // Convertir le contenu existant en liste d'objets CartItem
+    val type = object : TypeToken<List<CartItem>>() {}.type
+    val cartItems: MutableList<CartItem> = Gson().fromJson(existingContent, type)
+
+    // Ajouter le nouvel élément au panier
+    cartItems.add(cartItem)
+
+    // Conversion de la liste mise à jour en chaîne JSON
     val cartJson = Gson().toJson(cartItems)
 
-    val file = File(activity.filesDir, "cart.json")
+    // Écriture de la chaîne JSON dans le fichier en mode append
+    file.writeText(cartJson) // Utilisez writeText ici car vous remplacez tout le contenu par la liste mise à jour
 
-    // Écriture de la chaîne JSON dans un fichier
-    file.writeText(cartJson)
-
-    Log.d("DetailsDishesActivity2", "addToCart: $cartJson")
+    Log.d("DetailsDishesActivity2", "addToCart: Cart updated with $cartJson")
 
     // Affichez un message de confirmation
     Toast.makeText(activity, "Plat ajouté au panier", Toast.LENGTH_SHORT).show()
@@ -372,6 +386,12 @@ fun RocketoTopBar() {
         ),
         title = {
             Text("Rocketo Gusto")
+        },
+        actions = {
+            val onCartClicked = null
+            IconButton(onClick = { onCartClicked }) {
+                Icon(Icons.Default.ShoppingCart, contentDescription = "Panier", tint = Color.Black)
+            }
         }
     )
 }

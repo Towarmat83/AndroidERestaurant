@@ -45,12 +45,20 @@ import fr.isen.caliendo.androiderestaurant.model.Prices
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.File
 
 
 class DishesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val categoryName = intent.getStringExtra("categoryName") ?: ""
+
+        // Lire le fichier cart.json avec readText sans utiliser try catch
+        val cartFile = File("${this.filesDir}/cart.json").readText()
+
+        //Log pour lire le contenu du fichier cart.json
+        Log.d("ReadFile2", "Contenu du fichier cart.json dans DishesActivity: $cartFile")
+
         setContent {
             AndroidERestaurantTheme {
                 Surface(
