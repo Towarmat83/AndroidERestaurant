@@ -1,11 +1,14 @@
 package fr.isen.caliendo.androiderestaurant
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -67,8 +70,12 @@ import java.io.File
 
 
 class DetailsDishesActivity : ComponentActivity() {
+    private lateinit var startForDishesResult: ActivityResultLauncher<Intent>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState);
+        startForDishesResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        }
 
         // Lire le fichier cart.json avec readText sans utiliser try catch
         val cartFile = File("${this.filesDir}/cart.json").readText()
@@ -168,15 +175,19 @@ fun DetailsDishScreen(
                     QuantitySelector(
                         quantity = quantity,
                         onIncrease = { quantity++ },
-                        onDecrease = { if (quantity > 1) quantity-- }
+                        onDecrease = { if (quantity > 0) quantity-- }
                     )
                     PricesList(prices = prices, totalPrices = totalPrice)
-                    Button(onClick = {
-                        scope.launch {
-                            addToCart(dishName, quantity, totalPrice, activity, snackbarHostState)
+                    if (totalPrice == 0f) {
+                        Text("Veuillez sélectionner une quantité", color = Color.Red)
+                    } else {
+                        Button(onClick = {
+                            scope.launch {
+                                addToCart(dishName, quantity, totalPrice, activity, snackbarHostState)
+                            }
+                        }) {
+                            Text("Ajouter au panier")
                         }
-                    }) {
-                        Text("Ajouter au panier")
                     }
                 }
             }
@@ -232,6 +243,7 @@ suspend fun addToCart(
         actionLabel = "Continuer",
     ).also { result ->
         if (result == SnackbarResult.ActionPerformed) {
+            activity.startActivity(Intent(activity, HomeActivity::class.java))
             activity.finish()
         }
     }
