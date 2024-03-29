@@ -2,9 +2,9 @@ package fr.isen.caliendo.androiderestaurant
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,8 +29,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,26 +37,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
-import java.io.File
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val cartViewModel: CartViewModel by viewModels()
 
-        // Lire le fichier cart.json avec readText sans utiliser try catch
-        val cartFile = File("${this.filesDir}/cart.json").readText()
-
-        //Log pour lire le contenu du fichier cart.json
-        Log.d("ReadFile2", "Contenu du fichier cart.json dans HomeActivity: $cartFile")
+        cartViewModel.calculerTotalArticlesPanier(filesDir)
 
         setContent {
             AndroidERestaurantTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    val cartItemCount by remember { mutableStateOf(calculerTotalArticlesPanier()) }
-
+                val cartItemCount by cartViewModel.cartItemCount.observeAsState(0)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     MainPage(
                         navigateToDishes = { categoryName -> navigateToDishesActivity(categoryName) },
                         cartItemCount = cartItemCount
@@ -66,21 +61,11 @@ class HomeActivity : ComponentActivity() {
             }
         }
     }
+
     private fun navigateToDishesActivity(categoryName: String) {
         val intent = Intent(this, DishesActivity::class.java)
         intent.putExtra("categoryName", categoryName)
         startActivity(intent)
-    }
-
-    private fun calculerTotalArticlesPanier(): Int {
-        val cartFile = File(filesDir, "cart.json")
-        if (!cartFile.exists()) {
-            return 0
-        }
-        val cartJson = cartFile.readText()
-        val itemType = object : TypeToken<List<CartItem>>() {}.type
-        val cartItems: List<CartItem> = Gson().fromJson(cartJson, itemType)
-        return cartItems.sumOf { it.quantity }
     }
 }
 
@@ -112,12 +97,20 @@ fun MainPage(navigateToDishes: (String) -> Unit, cartItemCount: Int) {
                                 modifier = Modifier.padding(end = 4.dp)
                             )
                             IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
-                                Icon(Icons.Filled.ShoppingCart, contentDescription = "Panier", tint = Color.White)
+                                Icon(
+                                    Icons.Filled.ShoppingCart,
+                                    contentDescription = "Panier",
+                                    tint = Color.White
+                                )
                             }
                         }
                     } else {
                         IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
-                            Icon(Icons.Filled.ShoppingCart, contentDescription = "Panier", tint = Color.White)
+                            Icon(
+                                Icons.Filled.ShoppingCart,
+                                contentDescription = "Panier",
+                                tint = Color.White
+                            )
                         }
                     }
                 }
