@@ -132,6 +132,8 @@ fun MainPage(
     cartViewModel: CartViewModel,
 ) {
     val pricesMap by cartViewModel.itemPrices.observeAsState(emptyMap())
+    val cartItems by cartViewModel.cartItemsList.observeAsState(emptyList())
+
 
     Scaffold(
         topBar = {

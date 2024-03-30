@@ -10,6 +10,9 @@ import java.io.File
 class CartViewModel : ViewModel() {
     private val _cartItemCount = MutableLiveData<Int>()
     val cartItemCount: LiveData<Int> = _cartItemCount
+    private val _cartItemsList = MutableLiveData<List<CartItem>>()
+    val cartItemsList: LiveData<List<CartItem>> = _cartItemsList
+
 
     // LiveData pour stocker les prix unitaires des articles
     private val _itemPrices = MutableLiveData<Map<String, Double>>()
@@ -44,7 +47,10 @@ class CartViewModel : ViewModel() {
     fun deleteCartItem(cartItem: CartItem, filesDir: File) {
         val updatedCartItems = getUpdatedCartItems(cartItem, filesDir)
         updateCartItems(updatedCartItems, filesDir)
+        _cartItemsList.postValue(updatedCartItems) // Mettre à jour la liste observée
+        calculerTotalArticlesPanier(filesDir) // Recalculer le nombre d'articles
     }
+
 
     private fun getUpdatedCartItems(cartItemToDelete: CartItem, filesDir: File): List<CartItem> {
         val cartFile = File("${filesDir}/cart.json")
