@@ -182,9 +182,12 @@ fun DetailsDishScreen(
                         Text("Veuillez sélectionner une quantité", color = Color.Red)
                     } else {
                         Button(onClick = {
+                            Log.d("ReadFile2", "Bouton cliqué avant le scope.launch")
                             scope.launch {
+                                Log.d("ReadFile2", "Je suis dans le scope.launch")
                                 addToCart(dishName, quantity, totalPrice, activity, snackbarHostState)
                             }
+                            Log.d("ReadFile2", "Après le scope.launch")
                         }) {
                             Text("Ajouter au panier")
                         }
@@ -204,7 +207,7 @@ suspend fun addToCart(
     snackbarHostState: SnackbarHostState,
 ) {
     // Ajoutez le plat au panier
-    Log.i("DetailsDishesActivity2", "addToCart: $dishName, $quantity, $totalPrice")
+    Log.i("ReadFile2", "addToCart: $dishName, $quantity, $totalPrice")
 
     // Création de l'objet CartItem
     val cartItem = CartItem(dishName, quantity, totalPrice)
@@ -217,8 +220,18 @@ suspend fun addToCart(
     val type = object : TypeToken<List<CartItem>>() {}.type
     val cartItems: MutableList<CartItem> = Gson().fromJson(existingContent, type)
 
-    // Ajouter le nouvel élément au panier
-    cartItems.add(cartItem)
+    val existingItem = cartItems.find { it.dishName == dishName }
+
+    if(existingItem != null) {
+        existingItem.quantity += quantity
+        existingItem.totalPrice += totalPrice
+        Log.d("ReadFile2", "je suis dans le if existingItem: $existingItem")
+    } else {
+        cartItems.add(cartItem)
+        Log.d("ReadFile2", "Je suis dans le else")
+    }
+
+    Log.d("ReadFile2", "Je suis après le if else")
 
     // Conversion de la liste mise à jour en chaîne JSON
     val cartJson = Gson().toJson(cartItems)
@@ -226,11 +239,11 @@ suspend fun addToCart(
     // Écriture de la chaîne JSON dans le fichier en mode append
     file.writeText(cartJson) // Utilisez writeText ici car vous remplacez tout le contenu par la liste mise à jour
 
-    Log.d("DetailsDishesActivity2", "addToCart: Cart updated with $cartJson")
+    Log.d("ReadFile2", "addToCart: Cart updated with $cartJson")
 
     // Affichez un message de confirmation
     Toast.makeText(activity, "Plat ajouté au panier", Toast.LENGTH_SHORT).show()
-    Log.d("DetailsDishesActivity2", "Toast Affiché")
+    Log.d("ReadFile2", "Toast Affiché")
 
     // Après avoir sauvegardé le panier, mettez à jour le nombre d'articles dans les SharedPreferences
     val sharedPreferences = activity.getSharedPreferences("userPreferences", Context.MODE_PRIVATE)
@@ -252,8 +265,8 @@ suspend fun addToCart(
 
 data class CartItem(
     val dishName: String,
-    val quantity: Int,
-    val totalPrice: Float,
+    var quantity: Int,
+    var totalPrice: Float,
 )
 
 @Composable
