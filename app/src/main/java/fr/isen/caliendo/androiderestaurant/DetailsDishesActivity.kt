@@ -69,13 +69,16 @@ import java.io.File
 
 class DetailsDishesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState)
 
-        // Lire le fichier cart.json avec readText sans utiliser try catch
-        val cartFile = File("${this.filesDir}/cart.json").readText()
-
-        //Log pour lire le contenu du fichier cart.json
-        Log.d("ReadFile2", "Contenu du fichier cart.json dans DetailsDishesActivity: $cartFile")
+        val cartItemCount = if (File("${this.filesDir}/cart.json").exists()) {
+            val cartFile = File("${this.filesDir}/cart.json").readText()
+            Log.d("DetailsDishesActivity2", "Contenu du fichier cart.json dans DetailsDishesActivity: $cartFile")
+            calculerTotalArticlesPanier()
+        } else {
+            Log.d("DetailsDishesActivity2", "Le fichier cart.json n'existe pas dans DetailsDishesActivity")
+            0 // ou une autre valeur par défaut
+        }
 
         val dishName = intent.getStringExtra("dishName") ?: ""
         val imagesJson = intent.getStringExtra("images") ?: ""
@@ -103,7 +106,6 @@ class DetailsDishesActivity : ComponentActivity() {
                         color = MaterialTheme.colorScheme.background
                     ) {
 
-                        val cartItemCount by remember { mutableStateOf(calculerTotalArticlesPanier()) }
                         // Votre UI principale ici
                         DetailsDishScreen(
                             dishName = dishName,
@@ -135,6 +137,7 @@ class DetailsDishesActivity : ComponentActivity() {
         return cartItems.sumOf { it.quantity }
     }
 }
+
 
 
 @Composable

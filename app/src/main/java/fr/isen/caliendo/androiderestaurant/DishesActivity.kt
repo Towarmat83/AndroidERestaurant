@@ -31,7 +31,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -67,11 +66,14 @@ class DishesActivity : ComponentActivity() {
 
         val categoryName = intent.getStringExtra("categoryName") ?: ""
 
-        // Lire le fichier cart.json avec readText sans utiliser try catch
-        val cartFile = File("${this.filesDir}/cart.json").readText()
-
-        //Log pour lire le contenu du fichier cart.json
-        Log.d("ReadFile2", "Contenu du fichier cart.json dans DishesActivity: $cartFile")
+        val cartItemCount = if (File("${this.filesDir}/cart.json").exists()) {
+            val cartFile = File("${this.filesDir}/cart.json").readText()
+            Log.d("ReadFile2", "Contenu du fichier cart.json dans DishesActivity: $cartFile")
+            calculerTotalArticlesPanier()
+        } else {
+            Log.d("ReadFile2", "Le fichier cart.json n'existe pas dans DishesActivity")
+            0 // ou une autre valeur par défaut
+        }
 
         setContent {
             AndroidERestaurantTheme {
@@ -79,8 +81,6 @@ class DishesActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val cartItemCount by remember { mutableStateOf(calculerTotalArticlesPanier()) }
-
                     Column {
                         DishesMainPage(
                             navigateToDishes = { categoryName ->
