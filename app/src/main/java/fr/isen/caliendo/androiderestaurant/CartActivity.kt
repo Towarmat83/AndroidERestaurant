@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -196,7 +197,14 @@ fun MainPage(
                     modifier = Modifier.weight(1f)
                 ) {
                     items(cartItems) { cartItem ->
-                        CartItemRow(cartItem = cartItem)
+                        CartItemRow(
+                            cartItem = cartItem,
+                            onDeleteClick = {
+                                // Action à effectuer lors de la suppression de l'élément du panier
+                                // Vous pouvez appeler la fonction de suppression de l'élément du ViewModel ici
+                                cartViewModel.deleteCartItem(cartItem, activity.filesDir)
+                            }
+                        )
                     }
                 }
                 Text(
@@ -224,9 +232,8 @@ fun MainPage(
         }
     }
 }
-
 @Composable
-fun CartItemRow(cartItem: CartItem) {
+fun CartItemRow(cartItem: CartItem, onDeleteClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -244,15 +251,30 @@ fun CartItemRow(cartItem: CartItem) {
                 modifier = Modifier.weight(1f),
                 color = if (isSystemInDarkTheme()) Color.White else Color.Black
             )
-            Text(
-                text = "${cartItem.quantity} x ${cartItem.unitPrice} € = ${cartItem.totalPrice} €",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(start = 16.dp),
-                color = if (isSystemInDarkTheme()) Color.White else Color.Black
-            )
+            Row (
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "${cartItem.quantity} x ${cartItem.unitPrice} € = ${cartItem.totalPrice} €",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 16.dp),
+                    color = if (isSystemInDarkTheme()) Color.White else Color.Black
+                )
+                IconButton(
+                    onClick = onDeleteClick,
+                ) {
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = "Supprimer",
+                        tint = if (isSystemInDarkTheme()) Color.White else Color.Black
+                    )
+                }
+            }
         }
     }
 }
+
 
 @Composable
 fun EmptyCartMessage(activity: ComponentActivity) {
@@ -263,9 +285,7 @@ fun EmptyCartMessage(activity: ComponentActivity) {
     ) {
         Text(
             text = "Le panier est vide",
-            modifier = Modifier
-                .padding(32.dp),
-            color = Color.Black,
+            color = Color.White,
         )
         Button(
             onClick = {
@@ -274,10 +294,12 @@ fun EmptyCartMessage(activity: ComponentActivity) {
                 activity.startActivity(intent)
             },
             modifier = Modifier.fillMaxWidth()
+                .padding(32.dp)
+
         ) {
             Text(
                 text = "Revenir à la page d'accueil",
-                color = if (isSystemInDarkTheme()) Color.White else Color.Black
+                color = Color.Black
             )
         }
     }

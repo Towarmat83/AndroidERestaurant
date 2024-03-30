@@ -31,4 +31,36 @@ class CartViewModel : ViewModel() {
     fun updateItemPrices(pricesMap: Map<String, Double>) {
         _itemPrices.postValue(pricesMap)
     }
+
+    private fun updateCartItems(cartItems: List<CartItem>, filesDir: File) {
+        val cartFile = File("${filesDir}/cart.json")
+        if (cartFile.exists()) {
+            val cartJson = Gson().toJson(cartItems)
+            cartFile.writeText(cartJson)
+        }
+    }
+
+
+    fun deleteCartItem(cartItem: CartItem, filesDir: File) {
+        val updatedCartItems = getUpdatedCartItems(cartItem, filesDir)
+        updateCartItems(updatedCartItems, filesDir)
+    }
+
+    private fun getUpdatedCartItems(cartItemToDelete: CartItem, filesDir: File): List<CartItem> {
+        val cartFile = File("${filesDir}/cart.json")
+        if (cartFile.exists()) {
+            val cartJson = cartFile.readText()
+            val itemType = object : TypeToken<List<CartItem>>() {}.type
+            val cartItems: MutableList<CartItem> = Gson().fromJson(cartJson, itemType)
+
+            // Filter out the item to delete
+            val updatedItems = cartItems.filter { it.dishName != cartItemToDelete.dishName }
+
+            return updatedItems
+        }
+        return emptyList()
+    }
+
 }
+
+
