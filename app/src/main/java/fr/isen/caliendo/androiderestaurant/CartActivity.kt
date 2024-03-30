@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,10 +36,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import fr.isen.caliendo.androiderestaurant.model.DataResult
 import fr.isen.caliendo.androiderestaurant.ui.theme.AndroidERestaurantTheme
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.File
+
 
 class CartActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,22 +54,59 @@ class CartActivity : ComponentActivity() {
 
         val cartViewModel: CartViewModel by viewModels()
 
+        // Vérifier si le fichier cart.json existe
         if (File("${this.filesDir}/cart.json").exists()) {
+            // Lire le contenu du fichier cart.json
             val cartFile = File("${this.filesDir}/cart.json").readText()
             Log.d("CartActivity", "Contenu du fichier cart.json dans CartActivity: $cartFile")
-            val cartViewModel: CartViewModel by viewModels()
+            // Calculer le nombre d'articles dans le panier
             cartViewModel.calculerTotalArticlesPanier(filesDir)
-            cartViewModel.cartItemCount.value ?: 0
         } else {
+            // Si le fichier cart.json n'existe pas, afficher un message dans les logs
             Log.d("CartActivity", "Le fichier cart.json n'existe pas dans CartActivity")
-            0 // ou une autre valeur par défaut
         }
 
+        // Appeler l'API pour récupérer les prix unitaires des articles
+        val queue = Volley.newRequestQueue(this)
+        val url = "http://test.api.catering.bluecodegames.com/menu"
+        val params = JSONObject().apply { put("id_shop", "1") }
 
+
+        val request = JsonObjectRequest(
+            Request.Method.POST, url, params,
+            { response ->
+                try {
+                    // Parsez la réponse JSON pour obtenir les prix unitaires des articles
+                    val dataResult = Gson().fromJson(response.toString(), DataResult::class.java)
+                    val pricesMap =
+                        mutableMapOf<String, Double>() // Map pour stocker les prix unitaires
+
+                    dataResult.data.forEach { data ->
+                        data.items.forEach { item ->
+                            item.prices.forEach { price ->
+                                pricesMap[item.nameFr ?: ""] = price.price?.toDouble() ?: 0.0
+                            }
+                        }
+                    }
+
+                    // Mettre à jour le ViewModel avec les prix unitaires des articles
+                    cartViewModel.updateItemPrices(pricesMap)
+                } catch (e: JSONException) {
+                    Log.e("CartActivity", "Erreur lors de l'analyse JSON : $e")
+                }
+            },
+            { error ->
+                Log.e("CartActivity", "Erreur lors de la récupération des prix unitaires : $error")
+            })
+
+        queue.add(request)
+
+
+        // Définir le contenu de l'activité avec Compose
         setContent {
             AndroidERestaurantTheme {
                 val cartItemCount by cartViewModel.cartItemCount.observeAsState(0)
-                // A surface container using the 'background' color from the theme
+                // Surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -75,13 +122,16 @@ class CartActivity : ComponentActivity() {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainPage(
     cartItemCount: Int,
     activity: ComponentActivity,
-    cartViewModel: CartViewModel
+    cartViewModel: CartViewModel,
 ) {
+    val pricesMap by cartViewModel.itemPrices.observeAsState(emptyMap())
+
     Scaffold(
         topBar = {
             val couleurOrange = "#fa9b05"
@@ -135,58 +185,130 @@ fun MainPage(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
+        val cartItems = getCartItems(activity, pricesMap)
+        Column(
             modifier = Modifier
-                .padding(top = 16.dp)
+                .fillMaxSize()
                 .padding(innerPadding)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val cartItems = getCartItems(activity)
             if (cartItems.isNotEmpty()) {
-                items(cartItems) { cartItem ->
-                    // Afficher chaque élément du panier
-                    Text(
-                        text = "${cartItem.dishName}: ${cartItem.quantity}",
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                item {
-                    Button(
-                        onClick = {
-                            // Action lorsque le bouton est cliqué
-                            validateCommande(activity)
-                        },
-                        modifier = Modifier
-                            .padding(vertical = 16.dp)
-                            .fillMaxWidth()
-                    ) {
-                        Text(text = "Valider la commande")
+                LazyColumn(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(cartItems) { cartItem ->
+                        CartItemRow(cartItem = cartItem)
                     }
                 }
-            } else {
-                item {
+                Text(
+                    text = "Prix total : ${calculateTotalPrice(cartItems)} €",
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
+                )
+                Button(
+                    onClick = {
+                        validateCommande(activity)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp)
+                ) {
                     Text(
-                        text = "Le panier est vide",
-                        modifier = Modifier.fillMaxWidth()
+                        text = "Valider la commande",
+                        color = Color.Black
                     )
                 }
+            } else {
+                // Afficher un message lorsque le panier est vide
+                EmptyCartMessage(activity = activity)
             }
         }
     }
 }
 
-private fun getCartItems(activity: ComponentActivity): List<CartItem> {
+@Composable
+fun CartItemRow(cartItem: CartItem) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = cartItem.dishName,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f),
+                color = if (isSystemInDarkTheme()) Color.White else Color.Black
+            )
+            Text(
+                text = "${cartItem.quantity} x ${cartItem.unitPrice} € = ${cartItem.totalPrice} €",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(start = 16.dp),
+                color = if (isSystemInDarkTheme()) Color.White else Color.Black
+            )
+        }
+    }
+}
+
+@Composable
+fun EmptyCartMessage(activity: ComponentActivity) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Le panier est vide",
+            modifier = Modifier
+                .padding(32.dp),
+            color = Color.Black,
+        )
+        Button(
+            onClick = {
+                // Action lorsque le bouton est cliqué
+                val intent = Intent(activity, HomeActivity::class.java)
+                activity.startActivity(intent)
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Revenir à la page d'accueil",
+                color = if (isSystemInDarkTheme()) Color.White else Color.Black
+            )
+        }
+    }
+}
+
+fun calculateTotalPrice(cartItems: List<CartItem>): Double {
+    return cartItems.sumByDouble { it.totalPrice.toDouble() }
+}
+
+
+private fun getCartItems(
+    activity: ComponentActivity,
+    pricesMap: Map<String, Double>,
+): List<CartItem> {
     val cartFile = File("${activity.filesDir}/cart.json")
     if (cartFile.exists()) {
         val cartJson = cartFile.readText()
         val itemType = object : TypeToken<List<CartItem>>() {}.type
-        return Gson().fromJson(cartJson, itemType)
+        val cartItems: List<CartItem> = Gson().fromJson(cartJson, itemType)
+
+        // Mettre à jour le prix unitaire de chaque élément du panier s'il existe dans la pricesMap
+        cartItems.forEach { cartItem ->
+            val price = pricesMap[cartItem.dishName]
+            if (price != null) {
+                cartItem.unitPrice = price
+            }
+        }
+        return cartItems.filter { it.quantity > 0 } // Filtrer les éléments dont la quantité est supérieure à zéro
     }
     return emptyList()
 }
-
 
 private fun validateCommande(activity: ComponentActivity) {
     // Affichage du toast
@@ -202,4 +324,3 @@ private fun validateCommande(activity: ComponentActivity) {
     val intent = Intent(activity, HomeActivity::class.java)
     activity.startActivity(intent)
 }
-

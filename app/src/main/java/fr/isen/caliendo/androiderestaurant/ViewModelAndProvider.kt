@@ -11,6 +11,10 @@ class CartViewModel : ViewModel() {
     private val _cartItemCount = MutableLiveData<Int>()
     val cartItemCount: LiveData<Int> = _cartItemCount
 
+    // LiveData pour stocker les prix unitaires des articles
+    private val _itemPrices = MutableLiveData<Map<String, Double>>()
+    val itemPrices: LiveData<Map<String, Double>> = _itemPrices
+
     fun calculerTotalArticlesPanier(filesDir: File) {
         val cartFile = File(filesDir, "cart.json")
         if (!cartFile.exists()) {
@@ -21,5 +25,10 @@ class CartViewModel : ViewModel() {
             val cartItems: List<CartItem> = Gson().fromJson(cartJson, itemType)
             _cartItemCount.postValue(cartItems.sumOf { it.quantity })
         }
+    }
+
+    // Méthode pour mettre à jour les prix unitaires des articles
+    fun updateItemPrices(pricesMap: Map<String, Double>) {
+        _itemPrices.postValue(pricesMap)
     }
 }

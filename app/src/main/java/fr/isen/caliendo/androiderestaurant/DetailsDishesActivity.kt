@@ -264,7 +264,9 @@ data class CartItem(
     val dishName: String,
     var quantity: Int,
     var totalPrice: Float,
-)
+) {
+    var unitPrice: Double = 0.0
+}
 
 @Composable
 fun DishName(name: String, modifier: Modifier = Modifier) {
