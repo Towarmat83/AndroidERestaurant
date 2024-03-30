@@ -55,7 +55,8 @@ class HomeActivity : ComponentActivity() {
                 ) {
                     MainPage(
                         navigateToDishes = { categoryName -> navigateToDishesActivity(categoryName) },
-                        cartItemCount = cartItemCount
+                        cartItemCount = cartItemCount,
+                        activity = this@HomeActivity
                     )
                 }
             }
@@ -71,7 +72,7 @@ class HomeActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainPage(navigateToDishes: (String) -> Unit, cartItemCount: Int) {
+fun MainPage(navigateToDishes: (String) -> Unit, cartItemCount: Int, activity: HomeActivity) {
     Scaffold(
         topBar = {
             val couleurOrange = "#fa9b05"
@@ -96,7 +97,11 @@ fun MainPage(navigateToDishes: (String) -> Unit, cartItemCount: Int) {
                                 color = Color.White,
                                 modifier = Modifier.padding(end = 4.dp)
                             )
-                            IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
+                            IconButton(onClick = {
+                                // Action quand on clique sur l'icône
+                                val intent = Intent(activity, CartActivity::class.java)
+                                activity.startActivity(intent)
+                            }) {
                                 Icon(
                                     Icons.Filled.ShoppingCart,
                                     contentDescription = "Panier",
@@ -105,7 +110,11 @@ fun MainPage(navigateToDishes: (String) -> Unit, cartItemCount: Int) {
                             }
                         }
                     } else {
-                        IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
+                        IconButton(onClick = {
+                            // Action quand on clique sur l'icône
+                            val intent = Intent(activity, CartActivity::class.java)
+                            activity.startActivity(intent)
+                        }) {
                             Icon(
                                 Icons.Filled.ShoppingCart,
                                 contentDescription = "Panier",

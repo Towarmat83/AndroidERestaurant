@@ -7,8 +7,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -70,12 +68,8 @@ import java.io.File
 
 
 class DetailsDishesActivity : ComponentActivity() {
-    private lateinit var startForDishesResult: ActivityResultLauncher<Intent>
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState);
-        startForDishesResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        }
 
         // Lire le fichier cart.json avec readText sans utiliser try catch
         val cartFile = File("${this.filesDir}/cart.json").readText()
@@ -160,7 +154,7 @@ fun DetailsDishScreen(
 
     AndroidERestaurantTheme {
         Scaffold(
-            topBar = { RocketoTopBar(cartItemCount = cartItemCount) }, // Assurez-vous que RocketoTopBar() est définie comme expliqué précédemment
+            topBar = { RocketoTopBar(cartItemCount = cartItemCount, activity) }, // Assurez-vous que RocketoTopBar() est définie comme expliqué précédemment
             content = { innerPadding ->
                 Column(
                     modifier = Modifier
@@ -413,7 +407,7 @@ fun QuantitySelector(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RocketoTopBar(cartItemCount: Int) {
+fun RocketoTopBar(cartItemCount: Int, activity: ComponentActivity) {
     val couleurOrange = "#fa9b05"
     val couleurWhite = "#ffffff"
     val myColor = Color(android.graphics.Color.parseColor(couleurOrange))
@@ -433,14 +427,24 @@ fun RocketoTopBar(cartItemCount: Int) {
                         color = Color.White,
                         modifier = Modifier.padding(end = 4.dp)
                     )
-                    IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
+                    IconButton(onClick = {
+                        // Action quand on clique sur l'icône
+                        val intent = Intent(activity, CartActivity::class.java)
+                        activity.startActivity(intent)
+                    }) {
                         Icon(Icons.Filled.ShoppingCart, contentDescription = "Panier", tint = Color.White)
                     }
+
                 }
             } else {
-                IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
+                IconButton(onClick = {
+                    // Action quand on clique sur l'icône
+                    val intent = Intent(activity, CartActivity::class.java)
+                    activity.startActivity(intent)
+                }) {
                     Icon(Icons.Filled.ShoppingCart, contentDescription = "Panier", tint = Color.White)
                 }
+
             }
         }
     )

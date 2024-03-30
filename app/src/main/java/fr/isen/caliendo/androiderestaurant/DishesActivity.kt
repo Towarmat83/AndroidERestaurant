@@ -61,8 +61,10 @@ import java.io.File
 
 
 class DishesActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val categoryName = intent.getStringExtra("categoryName") ?: ""
 
         // Lire le fichier cart.json avec readText sans utiliser try catch
@@ -81,21 +83,25 @@ class DishesActivity : ComponentActivity() {
 
                     Column {
                         DishesMainPage(
-                            navigateToDishes = { categoryName -> navigateToDishDetails(
-                                context = LocalContext.current,
-                                dishName = categoryName,
-                                images = listOf(),
-                                ingredients = listOf(),
-                                prices = listOf()
-                            ) },
+                            navigateToDishes = { categoryName ->
+                                navigateToDishDetails(
+                                    context = LocalContext.current,
+                                    dishName = categoryName,
+                                    images = listOf(),
+                                    ingredients = listOf(),
+                                    prices = listOf()
+                                )
+                            },
                             cartItemCount = cartItemCount,
-                            name = categoryName
+                            name = categoryName,
+                            activity = this@DishesActivity
                         )
                     }
                 }
             }
         }
     }
+
     private fun calculerTotalArticlesPanier(): Int {
         val cartFile = File(filesDir, "cart.json")
         if (!cartFile.exists()) {
@@ -110,7 +116,13 @@ class DishesActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DishesMainPage(navigateToDishes: @Composable (String) -> Unit, cartItemCount: Int, name: String, modifier: Modifier = Modifier) {
+fun DishesMainPage(
+    navigateToDishes: @Composable (String) -> Unit,
+    cartItemCount: Int,
+    name: String,
+    modifier: Modifier = Modifier,
+    activity: ComponentActivity,
+) {
     Scaffold(
         topBar = {
             val couleurOrange = "#fa9b05"
@@ -135,14 +147,32 @@ fun DishesMainPage(navigateToDishes: @Composable (String) -> Unit, cartItemCount
                                 color = Color.White,
                                 modifier = Modifier.padding(end = 4.dp)
                             )
-                            IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
-                                Icon(Icons.Filled.ShoppingCart, contentDescription = "Panier", tint = Color.White)
+                            IconButton(onClick = {
+                                // Action quand on clique sur l'icône
+                                val intent = Intent(activity, CartActivity::class.java)
+                                activity.startActivity(intent)
+                            }) {
+                                Icon(
+                                    Icons.Filled.ShoppingCart,
+                                    contentDescription = "Panier",
+                                    tint = Color.White
+                                )
                             }
+
                         }
                     } else {
-                        IconButton(onClick = { /* Action quand on clique sur l'icône */ }) {
-                            Icon(Icons.Filled.ShoppingCart, contentDescription = "Panier", tint = Color.White)
+                        IconButton(onClick = {
+                            // Action quand on clique sur l'icône
+                            val intent = Intent(activity, CartActivity::class.java)
+                            activity.startActivity(intent)
+                        }) {
+                            Icon(
+                                Icons.Filled.ShoppingCart,
+                                contentDescription = "Panier",
+                                tint = Color.White
+                            )
                         }
+
                     }
                 }
             )
@@ -172,7 +202,8 @@ fun DishesList(context: Context, categoryName: String) {
     val queue = remember { Volley.newRequestQueue(context) }
     val url = "http://test.api.catering.bluecodegames.com/menu"
     val params = JSONObject().apply { put("id_shop", "1") }
-    val dishes = remember { mutableStateOf<List<Items>>(listOf()) } // Utilisez le type réel Items ici
+    val dishes =
+        remember { mutableStateOf<List<Items>>(listOf()) } // Utilisez le type réel Items ici
 
     LaunchedEffect(categoryName) {
         val request = JsonObjectRequest(Request.Method.POST, url, params, { response ->
@@ -183,7 +214,8 @@ fun DishesList(context: Context, categoryName: String) {
                 if (menuItems != null) {
                     dishes.value = menuItems
                 } else {
-                    dishes.value = listOf() // Assurez-vous d'affecter une liste vide au lieu de null
+                    dishes.value =
+                        listOf() // Assurez-vous d'affecter une liste vide au lieu de null
                     Log.d("DishesList", "Aucun plat trouvé pour la catégorie: $categoryName")
                 }
             } catch (e: JSONException) {
